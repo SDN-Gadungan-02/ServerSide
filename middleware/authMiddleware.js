@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import db from '../config/db.js';
+import User from '../models/User.js';
 
 export const authenticate = async (req, res, next) => {
     const tokenSources = [
@@ -11,53 +12,49 @@ export const authenticate = async (req, res, next) => {
     const token = tokenSources.find(t => t);
 
     if (!token) {
-        console.log('No token provided - but this might be normal for first visit');
-        return next(); // Lanjut tanpa error untuk route yang tidak membutuhkan auth
+        console.log('Authentication failed: No token provided');
+        return res.status(401).json({
+            success: false,
+            message: "Authentication token required"
+        });
     }
 
     try {
+        // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Gunakan connection pool dengan error handling
-        try {
-            const [rows] = await db.query(
-                'SELECT id, username, role FROM users WHERE id = ?',
-                [decoded.userId]
-            );
+        // Get fresh user data
+        const result = await db.query(
+            'SELECT id, username, role FROM tb_users WHERE id = $1 LIMIT 1',
+            [decoded.id]
+        );
 
-            if (!rows.length) {
-                console.log('User not found in database');
-                return res.status(401).json({
-                    success: false,
-                    message: 'User not found'
-                });
-            }
-
-            req.user = rows[0];
-            return next();
-        } catch (dbError) {
-            console.error('Database error:', dbError);
-            return res.status(503).json({
-                success: false,
-                message: 'Database connection error'
-            });
-        }
-    } catch (jwtError) {
-        console.error('JWT verification error:', jwtError.message);
-
-        // Handle token expired khusus
-        if (jwtError.name === 'TokenExpiredError') {
+        if (!result.rows[0]) {
+            console.log('Authentication failed: User not found');
             return res.status(401).json({
                 success: false,
-                message: 'Token expired',
-                error: 'TOKEN_EXPIRED'
+                message: "User not found"
+            });
+        }
+
+        // Attach user to request
+        req.user = result.rows[0];
+        next();
+    } catch (err) {
+        console.error('Authentication error:', err.message);
+
+        if (err.name === 'TokenExpiredError') {
+            return res.status(401).json({
+                success: false,
+                message: "Token expired",
+                error: "TOKEN_EXPIRED"
             });
         }
 
         return res.status(401).json({
             success: false,
-            message: 'Invalid token',
-            error: 'INVALID_TOKEN'
+            message: "Invalid token",
+            error: "INVALID_TOKEN"
         });
     }
 };

@@ -14,20 +14,20 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use('/static', express.static(path.join(__dirname, 'static')));
+// Middleware setup - ORDER MATTERS!
+app.use(express.json());
+app.use(cookieParser());
 
-// Tambahkan header CORS untuk static files
-app.use('/static', (req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    next();
-}, express.static(path.join(__dirname, 'static')));
+// Single CORS configuration
+app.use(cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
+// Static files - single definition
 app.use('/static', express.static(path.join(__dirname, 'static')));
 app.use('/uploads', express.static(path.join(__dirname, 'static', 'uploads')));
-
-app.get('/static/uploads/feeds/:file', (req, res) => {
-    res.redirect(`/static/uploads/feeds/${req.params.file}`);
-});
 
 // Test endpoint
 app.get('/test-images', (req, res) => {
@@ -47,29 +47,11 @@ app.get('/test-images', (req, res) => {
         });
     }
 });
-// CORS Middleware (jika frontend & backend terpisah)
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    next();
-});
 
-
-// Middleware
-app.use(express.json());
-app.use(cookieParser());
-app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    credentials: true
-}));
-
-// Pastikan path route diawali dengan /
+// API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes)
+app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
-
-// JANGAN gunakan URL lengkap seperti:
-// app.use('https://example.com/api', router); // SALAH
 
 // Error handler
 app.use((err, req, res, next) => {

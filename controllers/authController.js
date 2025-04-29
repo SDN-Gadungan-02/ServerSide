@@ -1,85 +1,117 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
+// controllers/authController.js
 export const login = async (req, res) => {
     const { username, password } = req.body;
-
-    if (!username || !password) {
-        return res.status(400).json({
-            success: false,
-            message: "Username and password are required",
-            error: "MISSING_CREDENTIALS"
-        });
-    }
+    console.log('Login attempt for:', username);
 
     try {
-        // 1. Cari user by username
-        const user = await User.findByUsername(username);
+        // Trim inputs
+        const trimmedUsername = username.trim();
+        const trimmedPassword = password.trim();
+
+        // Find user
+        const user = await User.findByUsernameOrEmail(trimmedUsername);
+
         if (!user) {
+            console.log('User not found');
             return res.status(401).json({
                 success: false,
-                message: 'Invalid credentials',
-                error: 'USER_NOT_FOUND'
+                message: "Invalid credentials",
+                error: "INVALID_CREDENTIALS"
             });
         }
 
-        // 2. Verifikasi password
-        const isMatch = await User.comparePassword(password, user.password);
-        if (!isMatch) {
+        // Verify password
+        const validPass = await User.comparePassword(trimmedPassword, user.password);
+
+        if (!validPass) {
+            console.log('Password comparison failed');
             return res.status(401).json({
                 success: false,
-                message: 'Invalid credentials',
-                error: 'INVALID_PASSWORD'
+                message: "Invalid credentials",
+                error: "INVALID_CREDENTIALS"
             });
         }
 
-        // 3. Buat token JWT
+        // Create token
         const token = jwt.sign(
-            {
-                userId: user.id,
-                role: user.role
-            },
+            { id: user.id, role: user.role },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+            { expiresIn: '1h' }
         );
 
-        // 4. Set cookie HTTP Only
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: parseInt(process.env.COOKIE_EXPIRES) || 3600000, // 1 jam
-            sameSite: 'strict'
-        });
-
-        // 5. Response tanpa password
-        const { password: _, ...userWithoutPassword } = user;
-
+        console.log('Login successful');
         res.json({
             success: true,
-            token, // Kirim token juga di body untuk fallback
-            user: userWithoutPassword
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role
+            }
         });
-
-
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({
             success: false,
-            message: "Server error",
-            error: "SERVER_ERROR"
+            message: 'Server error',
+            error: err.message
         });
     }
 };
 
+// controllers/authController.js
 export const verify = async (req, res) => {
-    // Middleware sudah menangani verifikasi
-    res.json({
-        success: true,
-        user: req.user
-    });
+    try {
+        if (!req.user) {
+            console.log('Verify failed: No user in request');
+            return res.status(401).json({
+                success: false,
+                message: "Not authenticated"
+            });
+        }
+
+        console.log('Verify successful for user:', req.user.id);
+        res.json({
+            success: true,
+            user: {
+                id: req.user.id,
+                username: req.user.username,
+                role: req.user.role
+            }
+        });
+    } catch (err) {
+        console.error('Verify endpoint error:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Server error during verification'
+        });
+    }
 };
 
-export const logout = (req, res) => {
-    res.clearCookie('token');
-    res.json({ success: true, message: "Logged out successfully" });
+export const logout = async (req, res) => {
+    try {
+        console.log('Logout request for user:', req.user.id);
+
+        // Clear HTTP-only cookie if using cookies
+        res.clearCookie('token', {
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production'
+        });
+
+        res.json({
+            success: true,
+            message: "Logged out successfully"
+        });
+    } catch (err) {
+        console.error('Logout endpoint error:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Logout failed'
+        });
+    }
 };

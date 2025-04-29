@@ -1,28 +1,44 @@
-import { Pool } from 'pg';
+import pg from 'pg';
 import dotenv from 'dotenv';
+import { setTimeout as delay } from 'timers/promises';
 
 dotenv.config();
 
-const db = new Pool({
+const { Pool } = pg;
+
+const poolConfig = {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 5432,
-});
+    port: process.env.DB_PORT,
+    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 30000,
+    max: 20
+};
 
-async function testConnection() {
+const pool = new Pool(poolConfig);
+
+// Enhanced connection testing with retries
+let retries = 3;
+while (retries > 0) {
     try {
-        const client = await db.connect();
-        console.log('✅ PostgreSQL connected successfully');
-        client.release();
+        await pool.query('SELECT NOW()');
+        console.log('✅ Database connected successfully');
+        break;
     } catch (err) {
-        console.error('❌ PostgreSQL connection error:', err);
-        process.exit(1); // Keluar aplikasi jika koneksi gagal
+        retries--;
+        console.error(`❌ Database connection failed (${retries} retries left):`, err.message);
+        if (retries === 0) {
+            console.error('Fatal: Could not connect to database after multiple attempts');
+            process.exit(1);
+        }
+        await delay(2000); // Wait 2 seconds before retrying
     }
 }
 
-testConnection();
+pool.on('error', (err) => {
+    console.error('Unexpected database pool error:', err);
+});
 
-
-export default db;
+export default pool;
