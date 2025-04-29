@@ -65,31 +65,10 @@ export const login = async (req, res) => {
 
 // controllers/authController.js
 export const verify = async (req, res) => {
-    try {
-        if (!req.user) {
-            console.log('Verify failed: No user in request');
-            return res.status(401).json({
-                success: false,
-                message: "Not authenticated"
-            });
-        }
-
-        console.log('Verify successful for user:', req.user.id);
-        res.json({
-            success: true,
-            user: {
-                id: req.user.id,
-                username: req.user.username,
-                role: req.user.role
-            }
-        });
-    } catch (err) {
-        console.error('Verify endpoint error:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Server error during verification'
-        });
-    }
+    res.json({
+        success: true,
+        user: req.user
+    });
 };
 
 export const logout = async (req, res) => {
