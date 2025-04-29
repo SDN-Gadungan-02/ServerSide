@@ -78,7 +78,15 @@ const UserController = {
                 return res.status(400).json({ success: false, message: 'Email already in use by another user' });
             }
 
-            const updatedUser = await User.update(id, { username, email, password, role });
+            // Prepare update data
+            const updateData = { username, email, role };
+
+            // Only update password if provided
+            if (password) {
+                updateData.password = await bcrypt.hash(password, 10);
+            }
+
+            const updatedUser = await User.update(id, updateData);
             res.json({ success: true, message: 'User updated successfully', data: updatedUser });
         } catch (error) {
             console.error('Error updating user:', error);

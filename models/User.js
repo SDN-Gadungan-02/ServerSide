@@ -24,24 +24,23 @@ class User {
         return result.rows[0];
     }
 
-    static async update(id, { username, email, password, role = 'user' }) {
-        let queryText, queryParams;
+    static async update(id, data) {
+        const { username, email, password, role } = data;
+
+        const query = {
+            text: `UPDATE tb_users 
+                   SET username = $1, email = $2, role = $3 
+                   ${password ? ', password = $5' : ''}
+                   WHERE id = $4
+                   RETURNING id, username, email, role`,
+            values: [username, email, role, id]
+        };
+
         if (password) {
-            const hashedPassword = await bcrypt.hash(password.trim(), 10);
-            queryText = `
-                UPDATE tb_users SET username = $1, email = $2, role = $3, password = $4 
-                WHERE id = $5 RETURNING id, username, email, role
-            `;
-            queryParams = [username, email, role, hashedPassword, id];
-        } else {
-            queryText = `
-                UPDATE tb_users SET username = $1, email = $2, role = $3 
-                WHERE id = $4 RETURNING id, username, email, role
-            `;
-            queryParams = [username, email, role, id];
+            query.values.push(password);
         }
 
-        const result = await db.query(queryText, queryParams);
+        const result = await db.query(query);
         return result.rows[0];
     }
 
@@ -70,6 +69,20 @@ class User {
             }
 
             return result.rows[0];
+        } catch (err) {
+            console.error('Database query error:', err);
+            throw err;
+        }
+    }
+
+    static async isEmailUsedByOtherUser(email, id) {
+
+        try {
+            const result = await db.query(
+                'SELECT id FROM tb_users WHERE email = $1 AND id != $2',
+                [email.trim(), id]
+            );
+            return result.rows.length > 0;
         } catch (err) {
             console.error('Database query error:', err);
             throw err;
