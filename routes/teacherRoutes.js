@@ -1,7 +1,7 @@
 import express from 'express';
 import TeacherController from '../controllers/teacherController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
-import { teacherUpload } from '../middleware/uploadMiddleware.js'; // Make sure this is correct
+import { teacherUpload } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 

@@ -13,24 +13,26 @@ class Teacher {
             const params = [];
 
             if (search) {
-                query += ' WHERE g.nama_guru LIKE ? OR g.NIP LIKE ?';
+                query += ' WHERE g.nama_guru ILIKE $1 OR g.NIP ILIKE $2';
                 params.push(`%${search}%`, `%${search}%`);
             }
 
-            const [rows] = await db.query(query, params);
-            return rows; // Just return the rows directly
+            // For PostgreSQL, the result is { rows, fields }
+            const result = await db.query(query, params);
+            return result.rows; // Return just the rows array
         } catch (error) {
             console.error('Error in Teacher.findAll:', error);
             throw error;
         }
     }
+
     static async findById(id) {
         try {
-            const results = await db.query(
-                'SELECT * FROM tb_guru WHERE id = ?',
+            const result = await db.query(
+                'SELECT * FROM tb_guru WHERE id = $1',
                 [id]
             );
-            return results[0][0]; // First row of first result
+            return result.rows[0];
         } catch (error) {
             console.error('Error in Teacher.findById:', error);
             throw error;
@@ -39,13 +41,13 @@ class Teacher {
 
     static async create({ nama_guru, pas_foto, NIP, keterangan_guru, status, author }) {
         try {
-            const results = await db.query(
+            const result = await db.query(
                 `INSERT INTO tb_guru 
                 (nama_guru, pas_foto, NIP, keterangan_guru, status, author) 
-                VALUES (?, ?, ?, ?, ?, ?)`,
+                VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
                 [nama_guru, pas_foto, NIP, keterangan_guru, status, author]
             );
-            return { id: results[0].insertId };
+            return result.rows[0];
         } catch (error) {
             console.error('Error in Teacher.create:', error);
             throw error;
