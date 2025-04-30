@@ -8,6 +8,7 @@ import fs from 'fs';
 import authRoutes from './routes/authRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import teacherRoutes from './routes/teacherRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,6 +34,7 @@ app.use('/static', express.static(path.join(process.cwd(), 'static')));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/teachers', teacherRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {
