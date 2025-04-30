@@ -25,28 +25,9 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Static files - single definition
-app.use('/static', express.static(path.join(__dirname, 'static')));
-app.use('/uploads', express.static(path.join(__dirname, 'static', 'uploads')));
 
-// Test endpoint
-app.get('/test-images', (req, res) => {
-    const testPath = path.join(__dirname, 'static', 'uploads', 'feeds');
-    try {
-        const files = fs.readdirSync(testPath);
-        res.json({
-            success: true,
-            files: files,
-            firstFileUrl: `${req.protocol}://${req.get('host')}/static/uploads/feeds/${files[0]}`
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message,
-            path: testPath
-        });
-    }
-});
+app.use('/static', express.static(path.join(process.cwd(), 'static')));
+
 
 // API Routes
 app.use('/api/auth', authRoutes);
