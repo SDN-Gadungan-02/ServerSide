@@ -4,24 +4,36 @@ import fs from 'fs';
 
 class Teacher {
     static async findAll(search = '') {
+        let query = 'SELECT * FROM tb_guru';
+        const params = [];
+
+        if (search) {
+            query += ' WHERE nama_guru ILIKE $1 OR nip ILIKE $2 OR keterangan_guru ILIKE $3';
+            params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+        }
+
+        const result = await db.query(query, params);
+        return result.rows; // Langsung return rows
+    }
+    static async create({ nama_guru, pas_foto, nip, keterangan_guru, author }) {
         try {
-            let query = `
-                SELECT g.*, u.username as author_name 
-                FROM tb_guru g
-                LEFT JOIN tb_users u ON g.author = u.id
-            `;
-            const params = [];
+            console.log('Data to insert:', {
+                nama_guru,
+                pas_foto: pas_foto?.length,
+                nip,
+                keterangan_guru: keterangan_guru?.length,
+                author
+            });
 
-            if (search) {
-                query += ' WHERE g.nama_guru ILIKE $1 OR g.NIP ILIKE $2';
-                params.push(`%${search}%`, `%${search}%`);
-            }
-
-            // For PostgreSQL, the result is { rows, fields }
-            const result = await db.query(query, params);
-            return result.rows; // Return just the rows array
+            const result = await db.query(
+                `INSERT INTO tb_guru 
+                (nama_guru, pas_foto, nip, keterangan_guru, author) 
+                VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+                [nama_guru, pas_foto, nip, keterangan_guru, author]
+            );
+            return result.rows[0];
         } catch (error) {
-            console.error('Error in Teacher.findAll:', error);
+            console.error('Error in Teacher.create:', error);
             throw error;
         }
     }
@@ -39,31 +51,16 @@ class Teacher {
         }
     }
 
-    static async create({ nama_guru, pas_foto, NIP, keterangan_guru, status, author }) {
+    static async update(id, { nama_guru, pas_foto, nip, keterangan_guru }) {
         try {
             const result = await db.query(
-                `INSERT INTO tb_guru 
-                (nama_guru, pas_foto, NIP, keterangan_guru, status, author) 
-                VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-                [nama_guru, pas_foto, NIP, keterangan_guru, status, author]
+                `UPDATE tb_guru SET 
+                nama_guru = $1, pas_foto = $2, nip = $3, 
+                keterangan_guru = $4
+                WHERE id = $5 RETURNING *`,
+                [nama_guru, pas_foto, nip, keterangan_guru, id]
             );
             return result.rows[0];
-        } catch (error) {
-            console.error('Error in Teacher.create:', error);
-            throw error;
-        }
-    }
-
-    static async update(id, { nama_guru, pas_foto, NIP, keterangan_guru, status }) {
-        try {
-            const results = await db.query(
-                `UPDATE tb_guru SET 
-                nama_guru = ?, pas_foto = ?, NIP = ?, 
-                keterangan_guru = ?, status = ? 
-                WHERE id = ?`,
-                [nama_guru, pas_foto, NIP, keterangan_guru, status, id]
-            );
-            return results[0]; // Return the result object
         } catch (error) {
             console.error('Error in Teacher.update:', error);
             throw error;
@@ -72,11 +69,11 @@ class Teacher {
 
     static async delete(id) {
         try {
-            const results = await db.query(
-                'DELETE FROM tb_guru WHERE id = ?',
+            const result = await db.query(
+                'DELETE FROM tb_guru WHERE id = $1 RETURNING *',
                 [id]
             );
-            return results[0]; // Return the result object
+            return result.rows[0];
         } catch (error) {
             console.error('Error in Teacher.delete:', error);
             throw error;
@@ -85,11 +82,11 @@ class Teacher {
 
     static async getImagePath(id) {
         try {
-            const results = await db.query(
-                'SELECT pas_foto FROM tb_guru WHERE id = ?',
+            const result = await db.query(
+                'SELECT pas_foto FROM tb_guru WHERE id = $1',
                 [id]
             );
-            return results[0][0]?.pas_foto; // First row's pas_foto
+            return result.rows[0]?.pas_foto;
         } catch (error) {
             console.error('Error in Teacher.getImagePath:', error);
             throw error;

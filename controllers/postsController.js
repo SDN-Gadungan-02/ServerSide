@@ -1,4 +1,5 @@
 import Post from '../models/Post.js';
+import fs from 'fs';
 
 const PostsController = {
     getAllPosts: async (req, res) => {

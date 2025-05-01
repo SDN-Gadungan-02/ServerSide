@@ -1,8 +1,10 @@
 import Teacher from '../models/Teacher.js';
+import fs from 'fs';
 
 const TeacherController = {
     getAllTeachers: async (req, res) => {
         try {
+            // Call the static method to fetch teachers
             const teachers = await Teacher.findAll(req.query.search);
 
             const teachersWithUrls = teachers.map(teacher => ({
@@ -28,10 +30,10 @@ const TeacherController = {
 
     createTeacher: async (req, res) => {
         try {
-            const { nama_guru, NIP, keterangan_guru, status } = req.body;
+            const { nama_guru, nip, keterangan_guru } = req.body;
             const author = req.user.id;
 
-            if (!nama_guru || !NIP) {
+            if (!nama_guru || !nip) {
                 return res.status(400).json({
                     success: false,
                     message: 'Nama dan NIP wajib diisi'
@@ -45,9 +47,8 @@ const TeacherController = {
             const newTeacher = await Teacher.create({
                 nama_guru,
                 pas_foto,
-                NIP,
+                nip,
                 keterangan_guru,
-                status: status || 'active',
                 author
             });
 
@@ -65,7 +66,7 @@ const TeacherController = {
     updateTeacher: async (req, res) => {
         try {
             const { id } = req.params;
-            const { nama_guru, NIP, keterangan_guru, status } = req.body;
+            const { nama_guru, nip, keterangan_guru } = req.body;
 
             const teacher = await Teacher.findById(id);
             if (!teacher) {
@@ -86,14 +87,13 @@ const TeacherController = {
             await Teacher.update(id, {
                 nama_guru,
                 pas_foto,
-                NIP,
+                nip,
                 keterangan_guru,
-                status
             });
 
             res.json({
                 success: true,
-                data: { id, nama_guru, pas_foto, NIP, keterangan_guru, status }
+                data: { id, nama_guru, pas_foto, nip, keterangan_guru }
             });
         } catch (error) {
             if (req.file) fs.unlinkSync(req.file.path);
