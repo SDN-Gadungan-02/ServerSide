@@ -9,6 +9,7 @@ import authRoutes from './routes/authRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import teacherRoutes from './routes/teacherRoutes.js';
+import historyRoutes from './routes/historyRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,6 +36,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/teachers', teacherRoutes);
+app.use('/api/history', historyRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {
