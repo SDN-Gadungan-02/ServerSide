@@ -36,3 +36,4 @@ const createUploader = (folderName, prefix) => {
 
 export const teacherUpload = createUploader('teachers', 'teacher');
 export const postUpload = createUploader('feeds', 'thumbnail');
+export const virtualUpload = createUploader('virtualtour', 'virtualtour');

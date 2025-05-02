@@ -1,89 +1,103 @@
-import db from "../config/db";
+import Visimisi from '../models/Visimisi.js';
 
 const VisimisiController = {
-
-    getAllVisimisi: async (req, res) => {
+    getVisiMisi: async (req, res) => {
         try {
-            const [visimisi] = await db.query('SELECT * FROM visimisi');
-            res.json({
-                success: true,
-                data: visimisi
-            });
-        } catch (error) {
-            console.error('Error fetching visimisi:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch visimisi'
-            });
-        }
-    },
+            const visimisi = await Visimisi.getVimis();
 
-    createVisimisi: async (req, res) => {
-        try {
-            const { text_vimis, author } = req.body;
-
-            // Validation
-            if (!text_vimis || !author) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'text_vimis, and author are required'
+            if (!visimisi) {
+                return res.json({
+                    success: true,
+                    data: {
+                        id: null,
+                        text_visi: "Visi sekolah belum tersedia",
+                        text_misi: [], // Kembalikan array kosong
+                        text_tujuan: [], // Kembalikan array kosong
+                        author: null,
+                        created_at: null
+                    }
                 });
             }
 
-            // Insert new visimisi
-            const [result] = await db.query(
-                'INSERT INTO visimisi (text_vimis, author) VALUES (?, ?, ?)',
-                [text_vimis, author]
-            );
+            // Pastikan selalu mengembalikan array
+            const textMisi = visimisi.text_misi ?
+                (Array.isArray(visimisi.text_misi) ?
+                    visimisi.text_misi :
+                    visimisi.text_misi.split('|').filter(Boolean)) :
+                [];
+
+            const textTujuan = visimisi.text_tujuan ?
+                (Array.isArray(visimisi.text_tujuan) ?
+                    visimisi.text_tujuan :
+                    visimisi.text_tujuan.split('|').filter(Boolean)) :
+                [];
 
             res.json({
                 success: true,
-                message: 'Visi Misi created successfully',
-                data: { id: result.insertId, text_vimis, author }
-            });
-        } catch (error) {
-            console.error('Error creating visimisi:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to create visimisi'
-            });
-        }
-    },
-
-    updateVisimisi: async (req, res) => {
-        try {
-            const { id } = req.params;
-            const { text_vimis, author } = req.body;
-
-            // Validation
-            if (!text_vimis || !author) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'text_vimis, and author are required'
-                });
-            }
-
-            // Update visimisi
-            const [result] = await db.query(
-                'UPDATE visimisi SET visi = ?, misi = ?, author = ? WHERE id = ?',
-                [text_vimis, author, id]
-            );
-
-            if (result.affectedRows === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Visi Misi not found'
+                data: {
+                    ...visimisi,
+                    text_misi: textMisi,
+                    text_tujuan: textTujuan
                 }
-                );
-            }
+            });
         } catch (error) {
-            console.error('Error updating visimisi:', error);
+            console.error('Error getting vision and mission:', error);
             res.status(500).json({
                 success: false,
-                message: 'Failed to update visimisi'
+                message: 'Failed to get vision and mission',
+                error: error.message
+            });
+        }
+    },
+
+    updateVisiMisi: async (req, res) => {
+        try {
+            const { text_visi, text_misi, text_tujuan } = req.body;
+            const author = req.user.username;
+
+            if (!text_visi || !text_misi || !text_tujuan) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Vision, mission and goals text are required'
+                });
+            }
+
+            let existing = await Visimisi.getVimis();
+            let updated;
+
+            if (existing) {
+                updated = await Visimisi.updateVimis(existing.id, {
+                    text_visi,
+                    text_misi: Array.isArray(text_misi) ? text_misi.join('|') : text_misi,
+                    text_tujuan: Array.isArray(text_tujuan) ? text_tujuan.join('|') : text_tujuan,
+                    author
+                });
+            } else {
+                updated = await Visimisi.createVimis({
+                    text_visi,
+                    text_misi: Array.isArray(text_misi) ? text_misi.join('|') : text_misi,
+                    text_tujuan: Array.isArray(text_tujuan) ? text_tujuan.join('|') : text_tujuan,
+                    author
+                });
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    ...updated,
+                    text_misi: updated.text_misi.split('|'),
+                    text_tujuan: updated.text_tujuan.split('|')
+                }
+            });
+        } catch (error) {
+            console.error('Error updating vision and mission:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to update vision and mission',
+                error: error.message
             });
         }
     }
-}
+};
 
 export default VisimisiController;

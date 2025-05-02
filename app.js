@@ -10,6 +10,8 @@ import postRoutes from './routes/postRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import teacherRoutes from './routes/teacherRoutes.js';
 import historyRoutes from './routes/historyRoutes.js';
+import visimisiRoutes from './routes/visimisiRoutes.js';
+import virtualtourRoutes from './routes/virtualtourRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,6 +39,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/history', historyRoutes);
+app.use('/api/visimisi', visimisiRoutes);
+app.use('/api/virtualtour', virtualtourRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {
