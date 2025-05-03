@@ -15,6 +15,8 @@ router.put('/:id', authenticate, virtualUpload.single('gambar_panorama'), Virtua
 router.delete('/:id', authenticate, VirtualTourController.deleteVirtualTour);
 
 // Hotspot routes
+// Di routes.js
+router.get('/:id/hotspots', VirtualTourController.getHotspot);
 router.post('/:id/hotspots', authenticate, VirtualTourController.createHotspot);
 router.put('/:id/hotspots/:hotspotId', authenticate, VirtualTourController.updateHotspot);
 router.delete('/:id/hotspots/:hotspotId', authenticate, VirtualTourController.deleteHotspot);

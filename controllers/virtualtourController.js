@@ -44,7 +44,13 @@ const VirtualTourController = {
 
     async createVirtualTour(req, res) {
         try {
-            const { nama_ruangan } = req.body;
+            console.log('Full request:', {
+                body: req.body,
+                file: req.file,
+                user: req.user
+            });
+
+            const { nama_ruangan, hotspots } = req.body;
             const author = req.user.id;
 
             if (!req.file) {
@@ -55,13 +61,53 @@ const VirtualTourController = {
             }
 
             const gambar_panorama = `/uploads/panorama/${req.file.filename}`;
-            const panorama = await VirtualTour.create({ nama_ruangan, gambar_panorama, author });
+
+            // 1. Create the panorama first
+            const panorama = await VirtualTour.create({
+                nama_ruangan,
+                gambar_panorama,
+                author
+            });
+
+            console.log('Created panorama:', panorama);
+
+            // 2. Create hotspots if they exist
+            if (hotspots) {
+                try {
+                    const parsedHotspots = JSON.parse(hotspots);
+                    console.log('Parsed hotspots:', parsedHotspots);
+
+                    for (const hotspot of parsedHotspots) {
+                        await VirtualTour.createHotspot({
+                            id_panorama: panorama.id,
+                            pitch: hotspot.pitch,
+                            yaw: hotspot.yaw,
+                            targetPanoramaId: hotspot.targetPanoramaId || null,
+                            name: hotspot.text || 'Hotspot',
+                            title: hotspot.text || 'Hotspot',
+                            deskripsi: hotspot.text || 'Hotspot description'
+                        });
+                    }
+                } catch (error) {
+                    console.error('Hotspot creation error:', error);
+                    // Continue even if hotspots fail
+                }
+            }
+
+            // 3. Get full panorama with hotspots
+            const fullPanorama = await VirtualTour.findById(panorama.id);
+            console.log('Full panorama with hotspots:', fullPanorama);
 
             res.status(201).json({
                 success: true,
-                data: panorama
+                data: fullPanorama
             });
+
         } catch (error) {
+            console.error('Create virtual tour error:', {
+                message: error.message,
+                stack: error.stack
+            });
             res.status(500).json({
                 success: false,
                 message: 'Failed to create virtual tour',
@@ -136,6 +182,31 @@ const VirtualTourController = {
             res.status(500).json({
                 success: false,
                 message: 'Failed to delete virtual tour',
+                error: error.message
+            });
+        }
+    },
+
+    async getHotspot(req, res) {
+        try {
+            const { id } = req.params;
+            const panorama = await VirtualTour.findById(id);
+
+            if (!panorama) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Panorama not found'
+                });
+            }
+
+            res.json({
+                success: true,
+                data: panorama.hotspots || []
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to get hotspots',
                 error: error.message
             });
         }
