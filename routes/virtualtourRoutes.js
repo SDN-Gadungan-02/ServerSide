@@ -5,17 +5,13 @@ import { virtualUpload } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
-// Public routes
 router.get('/', VirtualTourController.getAllVirtualTours);
 router.get('/:id', VirtualTourController.getVirtualTour);
 
-// Protected routes
 router.post('/', authenticate, virtualUpload.single('gambar_panorama'), VirtualTourController.createVirtualTour);
 router.put('/:id', authenticate, virtualUpload.single('gambar_panorama'), VirtualTourController.updateVirtualTour);
 router.delete('/:id', authenticate, VirtualTourController.deleteVirtualTour);
 
-// Hotspot routes
-// Di routes.js
 router.get('/:id/hotspots', VirtualTourController.getHotspot);
 router.post('/:id/hotspots', authenticate, VirtualTourController.createHotspot);
 router.put('/:id/hotspots/:hotspotId', authenticate, VirtualTourController.updateHotspot);

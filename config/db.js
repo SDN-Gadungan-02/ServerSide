@@ -19,7 +19,6 @@ const poolConfig = {
 
 const pool = new Pool(poolConfig);
 
-// Enhanced connection testing with retries
 let retries = 3;
 while (retries > 0) {
     try {
@@ -33,7 +32,7 @@ while (retries > 0) {
             console.error('Fatal: Could not connect to database after multiple attempts');
             process.exit(1);
         }
-        await delay(2000); // Wait 2 seconds before retrying
+        await delay(2000);
     }
 }
 

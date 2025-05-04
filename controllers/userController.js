@@ -3,7 +3,6 @@ import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 
 const UserController = {
-    // Get all users
     getAllUsers: async (req, res) => {
         try {
             const users = await User.getAll();
@@ -13,7 +12,6 @@ const UserController = {
             res.status(500).json({ success: false, message: 'Failed to fetch users' });
         }
     },
-    // Create user (PostgreSQL)
     createUser: async (req, res) => {
         try {
             const { username, email, password, role } = req.body;
@@ -78,10 +76,8 @@ const UserController = {
                 return res.status(400).json({ success: false, message: 'Email already in use by another user' });
             }
 
-            // Prepare update data
             const updateData = { username, email, role };
 
-            // Only update password if provided
             if (password) {
                 updateData.password = await bcrypt.hash(password, 10);
             }

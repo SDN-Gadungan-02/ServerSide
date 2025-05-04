@@ -1,17 +1,14 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-// controllers/authController.js
 export const login = async (req, res) => {
     const { username, password } = req.body;
     console.log('Login attempt for:', username);
 
     try {
-        // Trim inputs
         const trimmedUsername = username.trim();
         const trimmedPassword = password.trim();
 
-        // Find user
         const user = await User.findByUsernameOrEmail(trimmedUsername);
 
         if (!user) {
@@ -23,7 +20,6 @@ export const login = async (req, res) => {
             });
         }
 
-        // Verify password
         const validPass = await User.comparePassword(trimmedPassword, user.password);
 
         if (!validPass) {
@@ -35,7 +31,6 @@ export const login = async (req, res) => {
             });
         }
 
-        // Create token
         const token = jwt.sign(
             { id: user.id, role: user.role },
             process.env.JWT_SECRET,
@@ -63,7 +58,6 @@ export const login = async (req, res) => {
     }
 };
 
-// controllers/authController.js
 export const verify = async (req, res) => {
     res.json({
         success: true,
@@ -75,7 +69,6 @@ export const logout = async (req, res) => {
     try {
         console.log('Logout request for user:', req.user.id);
 
-        // Clear HTTP-only cookie if using cookies
         res.clearCookie('token', {
             httpOnly: true,
             sameSite: 'strict',

@@ -18,11 +18,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Middleware setup - ORDER MATTERS!
 app.use(express.json());
 app.use(cookieParser());
 
-// Single CORS configuration
 app.use(cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true,
@@ -33,7 +31,6 @@ app.use(cors({
 app.use('/static', express.static(path.join(process.cwd(), 'static')));
 
 
-// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
@@ -42,7 +39,6 @@ app.use('/api/history', historyRoutes);
 app.use('/api/visimisi', visimisiRoutes);
 app.use('/api/virtualtour', virtualtourRoutes);
 
-// Error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({
