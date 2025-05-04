@@ -14,37 +14,34 @@ class VirtualTour {
     return rows[0];
   }
 
-
-  // In VirtualTour model
   static async findAll(search = '') {
     const query = `
       SELECT 
         p.*,
         COALESCE(
-          (
-            SELECT json_agg(
-              json_build_object(
-                'id', v.id,
-                'pitch', v.pitch,
-                'yaw', v.yaw,
-                'text', v.name_deskripsi,
-                'description', v.deskripsi,
-                'targetPanoramaId', v.targetpanoramald,
-                'type', CASE WHEN v.targetpanoramald IS NOT NULL THEN 'scene' ELSE 'info' END
-              )
+          (SELECT json_agg(
+            json_build_object(
+              'id', v.id,
+              'pitch', v.pitch,
+              'yaw', v.yaw,
+              'targetPanoramaId', v.targetpanoramald,
+              'text', v.name_deskripsi,
+              'description', v.deskripsi
             )
-            FROM tb_virtual_tour_360 v
-            WHERE v.id_panorama_asal = p.id
-          ),
+          ) FROM tb_virtual_tour_360 v WHERE v.id_panorama_asal = p.id),
           '[]'
         ) as hotspots
       FROM tb_panorama p
       ${search ? `WHERE p.nama_ruangan ILIKE '%${search}%'` : ''}
     `;
     const { rows } = await db.query(query);
-    return rows;
-  }
 
+    return rows.map(row => ({
+      ...row,
+      gambar_panorama: `${process.env.BASE_URL || 'http://localhost:3000'}${row.gambar_panorama}`,
+      hotspots: row.hotspots || []
+    }));
+  }
   static async findById(id) {
     const query = `
       SELECT 

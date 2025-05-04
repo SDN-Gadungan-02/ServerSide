@@ -63,7 +63,7 @@ const VirtualTourController = {
                 });
             }
 
-            const gambar_panorama = `/uploads/panorama/${req.file.filename}`;
+            const gambar_panorama = `/static/uploads/virtualtour/${req.file.filename}`;
 
             // 1. Create the panorama first
             const panorama = await VirtualTour.create({
@@ -130,7 +130,7 @@ const VirtualTourController = {
             };
 
             if (req.file) {
-                updateData.gambar_panorama = `/uploads/panorama/${req.file.filename}`;
+                updateData.gambar_panorama = `/static/uploads/virtualtour/${req.file.filename}`;
 
                 // Delete old image if exists
                 const oldTour = await VirtualTour.findById(id);
