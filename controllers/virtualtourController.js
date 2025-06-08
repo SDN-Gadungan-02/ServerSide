@@ -230,7 +230,7 @@ const VirtualTourController = {
             const { id } = req.params;
             const { pitch, yaw, targetPanoramaId, text, description } = req.body;
 
-            // Validate panorama ID is a number
+            // Validasi panorama ID
             if (isNaN(Number(id))) {
                 return res.status(400).json({
                     success: false,
@@ -238,7 +238,7 @@ const VirtualTourController = {
                 });
             }
 
-            // Validate required fields
+            // Validasi field yang diperlukan
             if (!pitch || !yaw || !text) {
                 return res.status(400).json({
                     success: false,
@@ -246,7 +246,16 @@ const VirtualTourController = {
                 });
             }
 
-            // Validate target panorama exists if provided
+            // Validasi panorama asal ada
+            const sourcePanorama = await VirtualTour.findById(id);
+            if (!sourcePanorama) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Source panorama not found'
+                });
+            }
+
+            // Validasi panorama target ada jika disediakan
             if (targetPanoramaId) {
                 const targetExists = await VirtualTour.findById(targetPanoramaId);
                 if (!targetExists) {
@@ -258,7 +267,7 @@ const VirtualTourController = {
             }
 
             const hotspot = await VirtualTour.createHotspot({
-                id_panorama: Number(id), // Ensure numeric ID
+                id_panorama: Number(id),
                 pitch,
                 yaw,
                 targetPanoramaId: targetPanoramaId ? Number(targetPanoramaId) : null,
@@ -275,7 +284,8 @@ const VirtualTourController = {
                     yaw: hotspot.yaw,
                     text: hotspot.name,
                     description: hotspot.deskripsi,
-                    targetPanoramaId: hotspot.targetpanoramald
+                    targetPanoramaId: hotspot.targetpanoramald,
+                    id_panorama_asal: hotspot.id_panorama_asal
                 }
             });
         } catch (error) {

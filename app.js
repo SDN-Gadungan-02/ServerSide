@@ -12,6 +12,7 @@ import teacherRoutes from './routes/teacherRoutes.js';
 import historyRoutes from './routes/historyRoutes.js';
 import visimisiRoutes from './routes/visimisiRoutes.js';
 import virtualtourRoutes from './routes/virtualtourRoutes.js';
+import headspeechRoutes from './routes/headSpeechRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,6 +39,7 @@ app.use('/api/teachers', teacherRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/visimisi', visimisiRoutes);
 app.use('/api/virtualtour', virtualtourRoutes);
+app.use('/api/head-speech', headspeechRoutes);
 
 app.use((err, req, res, next) => {
     console.error(err.stack);

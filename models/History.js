@@ -13,15 +13,15 @@ class History {
         }
     }
 
-    static async updateHistory(id, { text_sejarah, author }) {
+    static async updateHistory(id, { text_history, author }) {
         try {
             const result = await db.query(
                 `UPDATE tb_sejarah SET 
-                text_sejarah = $1,
+                text_history = $1,
                 author = $2,
                 updated_at = NOW()
                 WHERE id = $3 RETURNING *`,
-                [text_sejarah, author, id]
+                [text_history, author, id]
             );
             return result.rows[0];
         } catch (error) {
@@ -30,13 +30,13 @@ class History {
         }
     }
 
-    static async createHistory({ text_sejarah, author }) {
+    static async createHistory({ text_history, author }) {
         try {
             const result = await db.query(
                 `INSERT INTO tb_sejarah 
-                (text_sejarah, author, created_at) 
+                (text_history, author, created_at) 
                 VALUES ($1, $2, NOW()) RETURNING *`,
-                [text_sejarah, author]
+                [text_history, author]
             );
             return result.rows[0];
         } catch (error) {

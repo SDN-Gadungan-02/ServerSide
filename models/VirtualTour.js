@@ -55,21 +55,15 @@ class VirtualTour {
                 'yaw', v.yaw,
                 'targetPanoramaId', v.targetpanoramald,
                 'text', v.name_deskripsi,
-                'title', v.title,
                 'description', v.deskripsi,
-                'type', CASE WHEN v.targetpanoramald IS NOT NULL THEN 'scene' ELSE 'info' END
+                'id_panorama_asal', v.id_panorama_asal
               )
             )
             FROM tb_virtual_tour_360 v
             WHERE v.id_panorama_asal = p.id
           ), 
           '[]'
-        ) as hotspots,
-        (
-          SELECT json_agg(json_build_object('id', t.id, 'nama_ruangan', t.nama_ruangan))
-          FROM tb_panorama t
-          WHERE t.id != p.id
-        ) as target_options
+        ) as hotspots
       FROM tb_panorama p
       WHERE p.id = $1
     `;

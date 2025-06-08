@@ -11,33 +11,36 @@ const VisimisiController = {
                     data: {
                         id: null,
                         text_visi: "Visi sekolah belum tersedia",
-                        text_misi: [], // Kembalikan array kosong
-                        text_tujuan: [], // Kembalikan array kosong
+                        text_misi: [],
+                        text_tujuan: [],
                         author: null,
                         created_at: null
                     }
                 });
             }
 
-            // Pastikan selalu mengembalikan array
-            const textMisi = visimisi.text_misi ?
-                (Array.isArray(visimisi.text_misi) ?
-                    visimisi.text_misi :
-                    visimisi.text_misi.split('|').filter(Boolean)) :
-                [];
+            // Clean and format the data
+            const cleanMisi = () => {
+                if (!visimisi.text_misi) return [];
+                if (Array.isArray(visimisi.text_misi)) return visimisi.text_misi;
+                const misi = visimisi.text_misi.split('|').filter(item => item && !item.includes("belum tersedia"));
+                return misi.length > 0 ? misi : ["Misi sekolah belum tersedia"];
+            };
 
-            const textTujuan = visimisi.text_tujuan ?
-                (Array.isArray(visimisi.text_tujuan) ?
-                    visimisi.text_tujuan :
-                    visimisi.text_tujuan.split('|').filter(Boolean)) :
-                [];
+            const cleanTujuan = () => {
+                if (!visimisi.text_tujuan) return [];
+                if (Array.isArray(visimisi.text_tujuan)) return visimisi.text_tujuan;
+                const tujuan = visimisi.text_tujuan.split('|').filter(item => item && !item.includes("belum tersedia") && !item.includes("sasasa"));
+                return tujuan.length > 0 ? tujuan : ["Tujuan sekolah belum tersedia"];
+            };
 
             res.json({
                 success: true,
                 data: {
                     ...visimisi,
-                    text_misi: textMisi,
-                    text_tujuan: textTujuan
+                    text_visi: visimisi.text_visi || "Visi sekolah belum tersedia",
+                    text_misi: cleanMisi(),
+                    text_tujuan: cleanTujuan()
                 }
             });
         } catch (error) {

@@ -2,10 +2,34 @@ import Teacher from '../models/Teacher.js';
 import fs from 'fs';
 
 const TeacherController = {
+    // Di TeacherController.js
     getAllTeachers: async (req, res) => {
         try {
-            // Call the static method to fetch teachers
-            const teachers = await Teacher.findAll(req.query.search);
+            const { search } = req.query;
+
+            let query = `
+            SELECT * FROM tb_guru
+            WHERE 1=1
+        `;
+
+            const params = [];
+            let paramIndex = 1;
+
+            if (search) {
+                query += `
+                AND (
+                    nama_guru ILIKE $${paramIndex} OR 
+                    nip ILIKE $${paramIndex} OR 
+                    keterangan_guru ILIKE $${paramIndex}
+                )
+            `;
+                params.push(`%${search}%`);
+                paramIndex++;
+            }
+
+            query += ` ORDER BY nama_guru ASC`;
+
+            const teachers = await Teacher.findAll(query, params);
 
             const teachersWithUrls = teachers.map(teacher => ({
                 ...teacher,

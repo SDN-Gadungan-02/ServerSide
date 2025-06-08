@@ -3,22 +3,42 @@ import fs from 'fs';
 import path from 'path';
 
 class Post {
-    static async findAll(search = '') {
-        let query = 'SELECT * FROM tb_postingan';
+    // Di Post model
+    static async findAll(search = '', page = 1, limit = 10) {
+        let query = `
+        SELECT p.*, u.nama as author_name 
+        FROM tb_postingan p
+        LEFT JOIN tb_user u ON p.author = u.id
+    `;
+
         const params = [];
+        let paramIndex = 1;
 
         if (search) {
-            query += ' WHERE title_postingan ILIKE $1 OR deskripsi_postingan ILIKE $2 OR kategori ILIKE $3';
-            params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+            query += `
+            WHERE 
+                p.title_postingan ILIKE $${paramIndex} OR 
+                p.deskripsi_postingan ILIKE $${paramIndex} OR 
+                p.kategori ILIKE $${paramIndex} OR
+                p.keyword ILIKE $${paramIndex} OR
+                u.nama ILIKE $${paramIndex}
+        `;
+            params.push(`%${search}%`);
+            paramIndex++;
         }
 
+        // Tambahkan pagination jika diperlukan
+        query += ` ORDER BY p.created_at DESC`;
+        // query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+        // params.push(limit, (page - 1) * limit);
+
         const result = await db.query(query, params);
-        return result.rows; // Langsung return rows
+        return result.rows;
     }
 
-    static async findById(id) {
+    static async getPostsById(id) {
         const result = await db.query('SELECT * FROM tb_postingan WHERE id = $1', [id]);
-        return result.rows[0]; // Ambil baris pertama
+        return result.rows[0];
     }
 
     static async create(postData) {

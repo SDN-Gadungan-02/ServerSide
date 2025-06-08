@@ -2,12 +2,41 @@ import db from '../config/db.js';
 import bcrypt from 'bcrypt';
 
 class User {
-    static async getAll() {
-        const result = await db.query('SELECT id, username, email, role FROM tb_users');
-        return result.rows;
+    // Di User model
+    static async getAll(search = '') {
+        try {
+            let query = `
+            SELECT id, username, email, role 
+            FROM tb_users
+            WHERE 1=1
+        `;
+
+            const params = [];
+            let paramIndex = 1;
+
+            if (search) {
+                query += `
+                AND (
+                    username ILIKE $${paramIndex} OR 
+                    email ILIKE $${paramIndex} OR 
+                    role ILIKE $${paramIndex}
+                )
+            `;
+                params.push(`%${search}%`);
+                paramIndex++;
+            }
+
+            query += ` ORDER BY username ASC`;
+
+            const result = await db.query(query, params);
+            return result.rows;
+        } catch (err) {
+            console.error('Error in User.getAll:', err);
+            throw err;
+        }
     }
 
-    static async create({ username, password, email, role = 'admin' }) {
+    static async create({ username, password, email, role }) {
         // Trim all inputs to prevent whitespace issues
         username = username.trim();
         password = password.trim();
@@ -24,23 +53,28 @@ class User {
         return result.rows[0];
     }
 
+    // models/User.js
     static async update(id, data) {
         const { username, email, password, role } = data;
 
-        const query = {
-            text: `UPDATE tb_users 
-                   SET username = $1, email = $2, role = $3 
-                   ${password ? ', password = $5' : ''}
-                   WHERE id = $4
-                   RETURNING id, username, email, role`,
-            values: [username, email, role, id]
-        };
+        let query;
+        let values;
 
         if (password) {
-            query.values.push(password);
+            query = `UPDATE tb_users 
+                SET username = $1, email = $2, role = $3, password = $4
+                WHERE id = $5
+                RETURNING id, username, email, role`;
+            values = [username, email, role, password, id];
+        } else {
+            query = `UPDATE tb_users 
+                SET username = $1, email = $2, role = $3
+                WHERE id = $4
+                RETURNING id, username, email, role`;
+            values = [username, email, role, id];
         }
 
-        const result = await db.query(query);
+        const result = await db.query(query, values);
         return result.rows[0];
     }
 

@@ -3,18 +3,33 @@ import path from 'path';
 import fs from 'fs';
 
 class Teacher {
-    static async findAll(search = '') {
+    // Di Teacher model
+    static async findAll(query, params) {
+        try {
+            const result = await db.query(query, params);
+            return result.rows;
+        } catch (err) {
+            console.error('Error in Teacher.findAll:', err);
+            throw err;
+        }
+    }
+
+    // Atau jika ingin mempertahankan method sebelumnya
+    static async searchTeachers(searchTerm = '') {
         let query = 'SELECT * FROM tb_guru';
         const params = [];
 
-        if (search) {
+        if (searchTerm) {
             query += ' WHERE nama_guru ILIKE $1 OR nip ILIKE $2 OR keterangan_guru ILIKE $3';
-            params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+            params.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
         }
 
+        query += ' ORDER BY nama_guru ASC';
+
         const result = await db.query(query, params);
-        return result.rows; // Langsung return rows
+        return result.rows;
     }
+
     static async create({ nama_guru, pas_foto, nip, keterangan_guru, author }) {
         try {
             console.log('Data to insert:', {
